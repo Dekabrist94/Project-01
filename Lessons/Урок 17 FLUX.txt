@@ -1,0 +1,77 @@
+Урок 17. FLUX - круговорот на каждый символ.
+
+MyPosts:
+1)textarea - value "it-kamasutra" фиксированное значение.
+Если хотим чтобы оно менялось, нужно определить событие onChange
+2) let onPostChange = () =>{...}
+3)textarea - value={props.newPostText} - Busines state
+4)onChange={onPostChange} : событие onChange
+
+State.js:
+1)profilePage:{
+newPostText: 'it-camasutra.com' - новое свойство
+}
+2)Прокидываем  newPostText по нашему дереву
+
+App.js:
+1)Переименовываем state={props.state.profilePage} в profilePage={props.state.profilePage}
+
+Content.jsx
+1)Переименовываем posts={props.state.posts} в posts={props.profilePage.posts}
+2)Прокидываем в Content.jsx => NewPostText: newPostText={props.profilePage.newPostText}
+
+
+В итоге в MyPosts есть newPostText и он будет равен: it-kamasutra, но не меняется.
+Нам нужно при нажатии на кнопку в  let onPostChange = () =>{...} отправить в BLL новое значение. Чтобы оно туда зафиксировалось.
+Помним что наш state меняеться только с помощью функций, которые определены в state.
+
+State.js:
+1) Создаём функцию export let updateNewPostText = (newText) => {
+Вносим свойство newPostText и присваеваем значение newText и перересовываем всё дерево.
+     state.profilePage.newPostText= newText; 
+     rerenderEntireTree(state);
+}
+
+Теперь у нас есть функция, которая будет вызывать и изменять state.
+Функция является объектом, поэтому её так же как и state так же как и addPost прокидываем вниз через props.
+
+Render.js:
+1)Перекидываем: <App state={state} addPost={addPost} updateNewPostText={updateNewPostText}/>
+2)Импортируем: import {addPost, updateNewPostText} from './redux/state';
+
+App.js:
+1)Передаём профилю: updateNewPostText={props.updateNewPostText}
+
+Content.jsx:
+1)Передаём в компоненту MyPosts: updateNewPostText={props.updateNewPostText}
+
+Компонента может получить props только через атрибуты.
+
+MyPosts:
+1)Вместо console.log() будем вызывать: props.updateNewPostText(); - эта функция из мира бизнеса BLL. 
+2)Ей передаём новый текст:  let onPostChange = () =>{
+        let text= newPostElement.current.value;
+        props.updateNewPostText(text);} И он отправляется в BLL.
+
+Чтобы занулить Textarea:
+1)В state.js удаляем значение в export let addPost = () => {...}
+2)Меняем в state.js message:postMessage  на message: state.profilePage.newPostText,
+3)В MyPosts.jsx код останется:  
+    let addPost = () => {
+        props.addPost();       
+    }
+    let onPostChange = () =>{
+        let text= newPostElement.current.value;
+        props.updateNewPostText(text);
+    }
+4)В state.js добавляем пустую строку: state.profilePage.newPostText='';
+
+
+Значит так: value, тобишь каждый символ в textarea, мы берем из BLL, в state. Делаем мы это через props. 
+Чтобы добавить каждый символ в state, т.е. наш value, мы используем обработчиком onChange. 
+Программируем наш onChange, чтобы value (символ который мы  нажали) передавался в state. 
+Делаем это через функцию update, которая должна лежать со state в BLL. 
+Прокидываем эту функцию через props в нашу компоненту. 
+В обработчике пишем,  вызови update(со значением value(символ)). т. е. то, что мы ввели, через функцию записывается в какой-то массив в state. 
+А textarea говорит: О! Сейчас кто-то ввел символ и  мой value стал тем, что ввели. Быстренько отображаю это, в поле ввода. 
+Получается, сначала поменялся state в BLL, а потом Ui в textarea. Это концепция Flux архитектуры.
